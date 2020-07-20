@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+	<form method="post">  
+ 	 	{% csrf_token %} 
+ 	 	{{question_formset.management_form}}  
+	 	{% for form in question_formset %}  
+        	{{ form.as_p }}
+	        <br>  
+	  	{% endfor %}
+	  	<input type="submit" name="question" value="Сохранить"> 
+	</form> 
+	
+
+
+	<form>
+		{% csrf_token %}
+		{{ answer_formset.management_form }}  
+	    {% for form in answer_formset %}  
+	    	<p> {{ form.question }} </p>
+	        <p>Введите ответ  {{ form.answer}}</p>
+	        <p>Баллы -  {{ form.point}}</p>
+
+	        <br>  
+	  	{% endfor %}  
+	    <input type="submit" name="answer" value="Сохранить"/>  
+	</form>  
+{% endblock %}
