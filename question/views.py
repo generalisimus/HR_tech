@@ -56,30 +56,39 @@ class CreateUserProfile(FormView):
 # 	template_name = 'answer.html'
 
 
-def question_answer_create(request):
+def question_create(request):
 	QuestionFormSet = formset_factory(QuestionForm, extra=1)
+	if request.method == 'POST':
+		question_formset = QuestionFormSet(request.POST, request.FILES, prefix='question')
+		if question_formset.is_valid():
+			for question_form in question_formset:
+				question_form.save()
+			return HttpResponseRedirect(reverse_lazy('question:answer_create'))			
+		
+	else:
+		question_formset = QuestionFormSet(prefix='question')
+	return render(request, 'question_create.html', {'question_formset': question_formset})
+
+
+
+def answer_create(request):
+	count = 1
+	search_query = request.POST.get('create_answer', '')
+	if search_query:
+		count = search_query
+
 	AnswerFormSet = formset_factory(AnswerForm, extra = 4)
 	question = Question.objects.last()
 	if request.method == 'POST':
-		if request.POST.get('question'):
-			question_formset = QuestionFormSet(request.POST, request.FILES, prefix='question')
-			if question_formset.is_valid():
-				for question_form in question_formset:
-					question_form.save()
-		return render(request, 'question_answer.html', {'question_formset': question_formset})			
-		
-		if request.POST.get('answer'):		
-			answer_formset = AnswerFormSet(request.POST, request.FILES, prefix='answer')
-			if answer_formset.is_valid():
-				for answer_form in answer_formset:
-					answer_form.save()
+		answer_formset = AnswerFormSet(request.POST, request.FILES, prefix='answer')
+		#if answer_formset.is_valid():
+		for answer_form in answer_formset:
+			answer_form.save()
 		return HttpResponseRedirect(reverse_lazy('question:base'))
+
 	else:
-		question_formset = QuestionFormSet(prefix='question')
 		answer_formset = AnswerFormSet(prefix='answer')
-	return render(request, 'question_answer.html', {'question': question, 'question_formset': question_formset, 'answer_formset': answer_formset})
-
-
+	return render(request, 'answer_create.html', {'answer_formset': answer_formset})
 
 
 # @login_required
@@ -108,7 +117,7 @@ def poll(request):
 		if form.is_valid():
 			for instanse in form:
 				instanse.save()
-			return HttpResponseRedirect(reverse_lazy('question:question_answer_create'))
+			return HttpResponseRedirect(reverse_lazy('question:question_create'))
 	else:
 		form = PollFormSet(queryset=Poll.objects.none())
 	return render(request, 'index.html', {'form' : form })
