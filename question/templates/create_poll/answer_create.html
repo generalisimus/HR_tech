@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+
+	<form method="post">  
+ 	 	{% csrf_token %} 
+ 	 	{{answer_formset.management_form}}  
+	 	{% for form in answer_formset %}  
+        	{{ form.as_p }}
+	        <br>  
+	  	{% endfor %}
+	  	<input type="submit" name="question" value="Сохранить"> 
+	</form> 
+
+{% endblock %}

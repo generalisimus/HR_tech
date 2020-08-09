@@ -1,7 +1,13 @@
-body {
+.conteiner {
 	background-color: #ddd;
+	display: flex;
+	text-decoration: none;
+}
+nav {
+	text-decoration: none;
+	color: black;
 }
 
-/* .form-answer {
-	display: none;
+#p {
+	background-color: #ddd
 } */

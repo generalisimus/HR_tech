@@ -2,38 +2,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Document</title>
+    <meta charset="UTF-8">
+    <title>Document</title>
     <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
     <link rel="stylesheet" href="{% static "css/style.css"%}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head> 
-<body>    
-    <nav class="nav" style="margin: 10px;">
-    {% if request.user.is_authenticated and request.user.is_staff %}
-        <ul class="nav nav-pills" style="margin-left: 10px;">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Конструктор опроса</a>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item"  href="{% url 'question:poll_create' %}"> Добавить новый опрос </a>
-                    <a class="dropdown-item"  href="{% url 'question:question_create' %}"> Добавить вопрос в существующий опрос </a>                    
-                </div>
-            </li>
-            <li class=" nav-item">
-                <a class="nav-link " href="{% url 'question:result_admin' %}"> Результаты тестирований </a>                
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="/admin">Админка</a>
-            </li>
-    {% endif %}
-    {% if  request.user.is_authenticated %}
-            <li class="nav-item">
-                <a class="nav-link" href="/logout">Выйти</a>
-            </li>    
-    {% endif %}
-        </ul> 
-    </nav>
-        <p>{{ user.username }}</p>
+<body> 
+    <div class="conteiner">       
+        <nav class="nav" style="margin: 10px;">
+        {% if request.user.is_authenticated and request.user.is_staff %}
+            <ul class="nav nav-pills" style="margin-left: 10px;">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Конструктор опроса</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item"  href="{% url 'question:poll_create' %}"> Добавить новый опрос </a>
+                        <a class="dropdown-item"  href="{% url 'question:question_create' %}"> Добавить вопрос в существующий опрос </a>                    
+                    </div>
+                </li>
+                <li class=" nav-item">
+                    <a class="nav-link " href="{% url 'question:result_admin' %}"> Результаты тестирований </a>                
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin">Админка</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"  href="/logout" >Выйти</a>  
+                </li>
+        {% endif %}
+
+        {% if not request.user.is_staff and request.user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link"  href="/logout" >Выйти</a>  
+                </li>
+        {% endif %}
+            </ul> 
+        </nav>
+    </div>
+    
     {% if request.user.is_authenticated and request.user.is_staff %}
         <h3>Для пользователей активны следующие опросы</h3>
         {% for p in poll %}

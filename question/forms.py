@@ -17,8 +17,9 @@ class QuestionForm(forms.ModelForm):
 		model = Question
 		fields =  ['name', 'title', 'images']
 
+
 class AnswerForm(forms.ModelForm):
 	class Meta:
 		model = Answer
-		fields = '__all__'
+		fields = ['answer', 'point']
 

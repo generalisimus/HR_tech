@@ -14,7 +14,8 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.forms import formset_factory  
 from django.db.models import Sum, Max, Min
 from django.db.models import Q
-
+from django.shortcuts import redirect
+	
 class RegisterView(FormView):
 	form_class = UserCreationForm  
 
@@ -67,47 +68,30 @@ def question_create(request):
 		
 	else:
 		question_formset = QuestionFormSet(prefix='question')
-	return render(request, 'question_create.html', {'question_formset': question_formset})
+	return render(request, 'create_poll/question_create.html', {'question_formset': question_formset})
 
 
 
 def answer_create(request):
-	count = 1
-	search_query = request.POST.get('create_answer', '')
-	if search_query:
-		count = search_query
 
 	AnswerFormSet = formset_factory(AnswerForm, extra = 4)
 	question = Question.objects.last()
 	if request.method == 'POST':
 		answer_formset = AnswerFormSet(request.POST, request.FILES, prefix='answer')
-		#if answer_formset.is_valid():
-		for answer_form in answer_formset:
-			answer_form.save()
-		return HttpResponseRedirect(reverse_lazy('question:base'))
+		if answer_formset.is_valid():
+			for answer_form in answer_formset:
+				answer_form.save()
+			return HttpResponseRedirect(reverse_lazy('question:base'))
 
 	else:
 		answer_formset = AnswerFormSet(prefix='answer')
-	return render(request, 'answer_create.html', {'answer_formset': answer_formset})
+	return render(request, 'create_poll/answer_create.html', {'answer_formset': answer_formset})
 
 
 # @login_required
 def base(request):
     poll = Poll.objects.all().order_by('id')
     return render(request, 'base.html', context = {'poll': poll})
-
-# def base(request):
-#     context = {}  
-#     if request.user.is_authenticated:  
-#         context['username'] = request.user.username
-#         context['polls'] = Poll.Question.all()
-
-#     return render(request, 'index.html', context)name'] = request.user.username
-#         context['polls'] = Poll.Question.all()
-
-#     return render(request, 'index.html', context)
-
-
 
 @user_passes_test(lambda user: user.is_staff)
 def poll(request):
@@ -120,16 +104,23 @@ def poll(request):
 			return HttpResponseRedirect(reverse_lazy('question:question_create'))
 	else:
 		form = PollFormSet(queryset=Poll.objects.none())
-	return render(request, 'index.html', {'form' : form })
+	return render(request, 'create_poll/index.html', {'form' : form })
 
 def answer_poll(request):
-	template = loader.get_template('answer_poll.html')
+	template = loader.get_template('answer/answer_poll.html')
 	questions = Question.objects.all()
 	answers = Answer.objects.all()
 	result = ResultsAll.objects.filter(id_user=request.user.id)
 	res = [x for x in result]
-	polls = Poll.objects.all().exclude(title__in=res)
+	polls = Poll.objects.all().exclude(title__in=res).exclude(is_active=False)
+	p = polls.first()
+	question = Question.objects.filter(name__in=polls).first()
+	r = ResultsAll.objects.last()
 	data = {
+		'p': p,
+		'question': question,
+		'r': r,
+		'results': results,
 		'res': res,
 		'result': result,
 		'polls': polls,
@@ -141,7 +132,7 @@ def answer_poll(request):
 def answer_question(request, pk):
 	res = []
 	polls = Poll.objects.filter(pk=pk)
-	template = loader.get_template('answer_question.html')
+	template = loader.get_template('answer/answer_question.html')
 	templates = loader.get_template('error.html')
 	questions = Question.objects.filter(name__in=polls)
 	question_count = questions.count()
@@ -168,57 +159,96 @@ def answer_question(request, pk):
 
 	return a
 
+def answer_question_two(request, pk):
+	template = loader.get_template('answer/answer_question_two.html')
+	question = Question.objects.get(pk=pk)
+	polls = Poll.objects.get(title=question.name)
+	questions = Question.objects.filter(name=polls)
+	d = 11
+	q = []
+	for i in questions:
+		q.append(i.id)
+	data = {
+		'd': d,
+		'q': q,
+		'polls': polls,
+		'question': question,
+		'questions': questions
+
+	}
+
+	return HttpResponse(template.render(data, request))
+
+def points(request, question_id):
+	question = Question.objects.get(id=question_id)
+	poll = Poll.objects.get(title=question.name)
+	questions = Question.objects.filter(name=poll)
+	q = []
+	for i in questions:
+		q.append(i.id)
+	
+	
+	if request.method == 'POST':
+		question_id += 1
+
+		if request.POST.get('answer') and question_id in q: 
+			Results.objects.all().create(total = request.POST['answer'],
+							name_user = request.user,
+							id_user = request.user.id,
+							question_total = question.title, 
+							poll_total = poll.title
+			)
+			return HttpResponseRedirect(reverse('question:answer_question_two', args=(question_id,)))
+
+		elif question_id not in q:
+			return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
+
+
+		else:
+			return HttpResponseRedirect(reverse('question:answer_question_two', args=(question.id,)))
+	
+	return HttpResponseRedirect(reverse('question:answer_question_two', args=(question_id,)))
+
+
+
 
 def save(request, pk):
-	template = loader.get_template('results.html')
+	template = loader.get_template('result/results.html')
 	polls = Poll.objects.filter(pk=pk)
 	polls_in = Poll.objects.get(pk=pk)
 	questions = Question.objects.filter(name__in=polls)
 	questions_count = questions.count()
 	results = Results.objects.only('request.user.id').order_by('-id')[:questions_count]
 	total_sum = results.aggregate(Sum('total'))['total__sum']
-	a = HttpResponse ('No ok')
-	if request.POST.get('total'):
+	if request.method == "GET":
 		ResultsAll.objects.all().create(name = request.user,
 								id_user = request.user.id,
 								poll_total = polls_in.title,
 								total = total_sum
 		)
 		a = HttpResponseRedirect(reverse('question:results', args=(polls_in.id,)))
+	# elif request.POST.get('total'):
+	# 	ResultsAll.objects.all().create(name = request.user,
+	# 							id_user = request.user.id,
+	# 							poll_total = polls_in.title,
+	# 							total = total_sum
+	# 	)
+	#	a = HttpResponseRedirect(reverse('question:results', args=(polls_in.id,)))
 	return a
 
 
-def point(request, pk):
-	b = Poll.objects.get(pk=pk)
-	a = Question.objects.get(pk=b.id)
-	if request.method == "POST":
-		if request.POST.get('answer'):
-		 	Results.objects.all().create(total = request.POST['answer'],
-		 	 				name_user = request.user,
-		 	 				question_total = a.title, 
- 	 						poll_total = b.title
- 			)
-
-		# saves.total = context
-		# saves.name = request.user
-		# saves.poll_total = b.title
-		# saves.save()
-	return HttpResponseRedirect(reverse('question:answer_question', args=(b.id,)))
-
-
-
 def results(request, poll_id):
-	template = loader.get_template('results.html')
+	template = loader.get_template('result/results.html')
 	polls = Poll.objects.filter(id=poll_id)
 	poll = Poll.objects.get(id=poll_id)
 	results = ResultsAll.objects.filter(poll_total=poll.title)
-	user = UserProfile.objects.all().count()
+	user = UserProfile.objects.all()
+	res_user = ResultsAll.objects.filter(poll_total=poll.title).count()
 	
 	questions = Question.objects.filter(name__in=polls).count()
 	users = request.user
 	
 	result_user = ResultsAll.objects.filter(poll_total=poll.title).get(id_user=users.id)
-	#result_user = ResultsAll.objects.get(id_user=users.id)
 
 	result_procent = []
 	for r in results:
@@ -239,6 +269,8 @@ def results(request, poll_id):
 	poll_question = Question.objects.filter(name__in=polls)
 	poll_answer = Answer.objects.filter(question__in=poll_question)
 	data = {
+		'res_user': res_user,
+		'user': user,
 		'result_user': result_user,
 		'repeat': repeat,
 		'result_procent': result_procent,
@@ -246,10 +278,10 @@ def results(request, poll_id):
 		'poll': poll,
 		'users': users,
 	}
-	return HttpResponse(template.render(data))
+	return HttpResponse(template.render(data, request))
 
 def result_admin(request):
-	template = loader.get_template('result_admin.html')
+	template = loader.get_template('result/result_admin.html')
 	search_query = request.GET.get('search', '')
 	search_user = request.GET.get('search_user', '')
 	search_question = request.GET.get('search_accurate', '')
@@ -260,7 +292,7 @@ def result_admin(request):
 				 Q(poll_total__icontains=search_query)).order_by('poll_total', '-total')
 			
 	else:
-		result = ResultsAll.objects.all().order_by('poll_total', '-total')
+		result = ResultsAll.objects.all().order_by('poll_total', '-total')[:20]
 	
 	user = request.user
 	users = UserProfile.objects.all()
@@ -275,14 +307,13 @@ def result_admin(request):
 	}
 	return HttpResponse(template.render(data))
 
-
-
+# Присвоить связной модели name в answer значение по умоланию далее с помощь Jquery организовать функцию clone
+	#для всей формы  т.е клонирование осущ за счет создания формы полностью 
 
 # при добавлениии опроса по умолчанию вопрос добавлять в только что созданный опрос (доделать)
 
 # реализуем переход от radio к checkbox 
 
-# при регистрации убрать выбор пользователей
 
 # добавляем детальное отображение результатов опроса
 
