@@ -24,13 +24,9 @@ urlpatterns = [
     ), name='register'),  
 	path('profile-create/', CreateUserProfile.as_view(), name='profile-create'),
 	path('answer_poll', answer_poll, name='answer_poll'),
-	path('answer_question/<int:pk>/', answer_question, name='answer_question'),
-	#path('answer_answer/<int:question_id>/', point, name='point')
-	#path('answer_question/<int:pk>/point', point, name='point'),
 	path('answer_question/<int:pk>/save', save, name='save'),
-	#path('answer_questino/<int:pk>/save', save, name='save'),
 	path('results/<int:poll_id>/', results, name='results'),
 	path('result_admin', result_admin, name='result_admin'),
 	path('points/<int:question_id>/', points, name="points"),
-	path('answer_question_two/<int:pk>/', answer_question_two, name='answer_question_two'),
+	path('answer_question/<int:pk>/', answer_question, name='answer_question'),
 ]

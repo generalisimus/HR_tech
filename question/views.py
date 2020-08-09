@@ -129,38 +129,38 @@ def answer_poll(request):
 	}
 	return HttpResponse(template.render(data, request))
 
+# def answer_question(request, pk):
+# 	res = []
+# 	polls = Poll.objects.filter(pk=pk)
+# 	template = loader.get_template('answer/answer_question.html')
+# 	templates = loader.get_template('error.html')
+# 	questions = Question.objects.filter(name__in=polls)
+# 	question_count = questions.count()
+# 	user = request.user
+
+# 	poll = Poll.objects.get(id=pk)
+# 	result = ResultsAll.objects.filter(id_user=request.user.id).only('poll_total')
+# 	for r in result:
+# 		res.append(r)
+
+# 	data = {
+# 		'poll': poll,
+# 		'res': res,
+# 		'result': result,
+# 		'user': user,
+# 		'question_count': question_count,
+# 		'polls': polls,
+# 		'questions': questions,
+# 	}
+# 	a = HttpResponse(template.render(data, request))
+# 	for r in res:
+# 		if r.poll_total in poll.title:
+# 			a = HttpResponse(templates.render(context={'error': 'Вы уже проходили этот опрос'}))
+
+# 	return a
+
 def answer_question(request, pk):
-	res = []
-	polls = Poll.objects.filter(pk=pk)
 	template = loader.get_template('answer/answer_question.html')
-	templates = loader.get_template('error.html')
-	questions = Question.objects.filter(name__in=polls)
-	question_count = questions.count()
-	user = request.user
-
-	poll = Poll.objects.get(id=pk)
-	result = ResultsAll.objects.filter(id_user=request.user.id).only('poll_total')
-	for r in result:
-		res.append(r)
-
-	data = {
-		'poll': poll,
-		'res': res,
-		'result': result,
-		'user': user,
-		'question_count': question_count,
-		'polls': polls,
-		'questions': questions,
-	}
-	a = HttpResponse(template.render(data, request))
-	for r in res:
-		if r.poll_total in poll.title:
-			a = HttpResponse(templates.render(context={'error': 'Вы уже проходили этот опрос'}))
-
-	return a
-
-def answer_question_two(request, pk):
-	template = loader.get_template('answer/answer_question_two.html')
 	question = Question.objects.get(pk=pk)
 	polls = Poll.objects.get(title=question.name)
 	questions = Question.objects.filter(name=polls)
@@ -198,16 +198,16 @@ def points(request, question_id):
 							question_total = question.title, 
 							poll_total = poll.title
 			)
-			return HttpResponseRedirect(reverse('question:answer_question_two', args=(question_id,)))
+			return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
 
 		elif question_id not in q:
 			return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
 
 
 		else:
-			return HttpResponseRedirect(reverse('question:answer_question_two', args=(question.id,)))
+			return HttpResponseRedirect(reverse('question:answer_question', args=(question.id,)))
 	
-	return HttpResponseRedirect(reverse('question:answer_question_two', args=(question_id,)))
+	return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
 
 
 
