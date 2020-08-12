@@ -62,6 +62,10 @@ def question_create(request):
 	if request.method == 'POST':
 		question_formset = QuestionFormSet(request.POST, request.FILES, prefix='question')
 		if question_formset.is_valid():
+			if 'images' in request.FILES:
+				question_formset.images = request.FILEX['images']
+				question_formset.save(commit=True)
+
 			for question_form in question_formset:
 				question_form.save()
 			return HttpResponseRedirect(reverse_lazy('question:answer_create'))			
@@ -73,10 +77,14 @@ def question_create(request):
 
 
 def answer_create(request):
+	n = 0
+	if request.POST.get('number'):
+		b = request.POST['number']
+		n = int(b)
 
-	AnswerFormSet = formset_factory(AnswerForm, extra = 4)
+	AnswerFormSet = formset_factory(AnswerForm, extra = n)
 	question = Question.objects.last()
-	if request.method == 'POST':
+	if request.method == 'POST' and request.POST.get('question'):
 		answer_formset = AnswerFormSet(request.POST, request.FILES, prefix='answer')
 		if answer_formset.is_valid():
 			for answer_form in answer_formset:
@@ -95,7 +103,7 @@ def base(request):
 
 @user_passes_test(lambda user: user.is_staff)
 def poll(request):
-	PollFormSet = modelformset_factory(Poll, fields=('title', 'data_publish', 'is_active'))
+	PollFormSet = modelformset_factory(Poll, fields=('title', 'data_publish', 'is_active',))
 	if request.method == 'POST':
 		form = PollFormSet(request.POST)
 		if form.is_valid():
@@ -116,6 +124,7 @@ def answer_poll(request):
 	p = polls.first()
 	question = Question.objects.filter(name__in=polls).first()
 	r = ResultsAll.objects.last()
+
 	data = {
 		'p': p,
 		'question': question,
@@ -129,35 +138,6 @@ def answer_poll(request):
 	}
 	return HttpResponse(template.render(data, request))
 
-# def answer_question(request, pk):
-# 	res = []
-# 	polls = Poll.objects.filter(pk=pk)
-# 	template = loader.get_template('answer/answer_question.html')
-# 	templates = loader.get_template('error.html')
-# 	questions = Question.objects.filter(name__in=polls)
-# 	question_count = questions.count()
-# 	user = request.user
-
-# 	poll = Poll.objects.get(id=pk)
-# 	result = ResultsAll.objects.filter(id_user=request.user.id).only('poll_total')
-# 	for r in result:
-# 		res.append(r)
-
-# 	data = {
-# 		'poll': poll,
-# 		'res': res,
-# 		'result': result,
-# 		'user': user,
-# 		'question_count': question_count,
-# 		'polls': polls,
-# 		'questions': questions,
-# 	}
-# 	a = HttpResponse(template.render(data, request))
-# 	for r in res:
-# 		if r.poll_total in poll.title:
-# 			a = HttpResponse(templates.render(context={'error': 'Вы уже проходили этот опрос'}))
-
-# 	return a
 
 def answer_question(request, pk):
 	template = loader.get_template('answer/answer_question.html')
@@ -180,32 +160,63 @@ def answer_question(request, pk):
 	return HttpResponse(template.render(data, request))
 
 def points(request, question_id):
+	result = Results.objects.filter(id_user=request.user.id)
 	question = Question.objects.get(id=question_id)
 	poll = Poll.objects.get(title=question.name)
 	questions = Question.objects.filter(name=poll)
-	q = []
-	for i in questions:
-		q.append(i.id)
-	
-	
-	if request.method == 'POST':
-		question_id += 1
+	list_result = []
+	for i in result:
+		list_result.append(i.question_total)
+	if question.title in list_result:
+		context={
+			'error': ' Вы пытались ответить дважды' '\n'
+					'обратитесь к администратору'
 
-		if request.POST.get('answer') and question_id in q: 
+		}
+		return render(request, 'error.html', context)
+
+#	i = Question.objects.filter(name=poll).count()
+	question_list_id = []
+	for i in questions:
+		question_list_id.append(i.id)
+	
+	if request.method == 'POST' and question.question_type == 'radio':
+		if request.POST.get('answer') and question_id in question_list_id: 
 			Results.objects.all().create(total = request.POST['answer'],
 							name_user = request.user,
 							id_user = request.user.id,
 							question_total = question.title, 
 							poll_total = poll.title
 			)
+			question_id += 1
+			if question_id not in question_list_id:
+			 	return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
+			return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
+		# elif question_id not in question_list_id:
+		# 	return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
+	elif request.method == 'POST' and question.question_type == 'checkbox':
+		if request.POST.get('answer') and question_id in question_list_id:		
+			answer_server = request.POST.getlist('answer')
+			question_check = []
+			for i in answer_server:
+				question_check.append(int(i))
+			sum_question = sum(question_check)
+
+			Results.objects.all().create(total = sum_question,
+							name_user = request.user,
+							id_user = request.user.id,
+							question_total = question.title, 
+							poll_total = poll.title
+			)
+			question_id += 1
+			if question_id not in question_list_id:
+				return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
+
 			return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
 
-		elif question_id not in q:
-			return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
 
-
-		else:
-			return HttpResponseRedirect(reverse('question:answer_question', args=(question.id,)))
+	else:
+		return HttpResponseRedirect(reverse('question:answer_question', args=(question.id,)))
 	
 	return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
 
@@ -227,13 +238,6 @@ def save(request, pk):
 								total = total_sum
 		)
 		a = HttpResponseRedirect(reverse('question:results', args=(polls_in.id,)))
-	# elif request.POST.get('total'):
-	# 	ResultsAll.objects.all().create(name = request.user,
-	# 							id_user = request.user.id,
-	# 							poll_total = polls_in.title,
-	# 							total = total_sum
-	# 	)
-	#	a = HttpResponseRedirect(reverse('question:results', args=(polls_in.id,)))
 	return a
 
 
@@ -312,11 +316,12 @@ def result_admin(request):
 
 # при добавлениии опроса по умолчанию вопрос добавлять в только что созданный опрос (доделать)
 
-# реализуем переход от radio к checkbox 
-
-
 # добавляем детальное отображение результатов опроса
 
+# добавить временное ограничение на опрос и на вопрос
+
+# добавить try except
+
 # При помощи JS:
-#	1. При нажатии на кнопку конструктор опросов скрывать проверку на наличие непройденых опросов
-#   2. Добавляе алерты при создании опроса и при ответах на вопросы а так же при регистрации 
+#	1. Добавляе алерты при создании опроса и при ответах на вопросы а так же при регистрации 
+#	2. Стилизовать приложение.

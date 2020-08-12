@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from question.models import Question, Poll, UserProfile, Answer
+from question.models import *
 from django.contrib.auth.models import User
 
 
@@ -20,8 +20,7 @@ class AnswerInline(admin.TabularInline):
 class PollAdmin(admin.ModelAdmin):
 	model = Poll
 	list_display = ['title', 'id', 'is_active']
-	inlines = [QuestionInline]
-	pass
+
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
 	search_fields = ['title']
@@ -36,3 +35,10 @@ class ProfileAdmin(admin.ModelAdmin):
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
 	pass
+
+@admin.register(ResultsAll)
+class ResultAllAdmin(admin.ModelAdmin):
+	model = ResultsAll
+	list_display = ['name', 'id_user', 'poll_total', 'total']
+	list_filter = ['poll_total']
+	search_fields = ['name']

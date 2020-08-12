@@ -1,14 +1,26 @@
 {% extends 'base.html' %}
 {% block content %}
-
-	<form method="post">  
- 	 	{% csrf_token %} 
- 	 	{{answer_formset.management_form}}  
-	 	{% for form in answer_formset %}  
-        	{{ form.as_p }}
-	        <br>  
-	  	{% endfor %}
-	  	<input type="submit" name="question" value="Сохранить"> 
-	</form> 
+<div class="conteiners" style="display: flex;justify-content: center;" >
+	<div class="answer_invisible" style="display: none;" >
+		<h3>Введите ответы:</h3>
+		<form method="POST">  
+ 	 		{% csrf_token %} 
+ 	 		{{answer_formset.management_form}}  
+	 		{% for form in answer_formset %}  
+        		{{ form.as_p }}
+	        	<br>  
+	  		{% endfor %}
+			<input type="submit" name="question" value="Сохранить">
+		</form>
+	</div>	
+<!-- 	<div class="answer_count" style="display: inline;">
+	<form method="post">
+	{% csrf_token %} 
+		<input type="text" name="number" placeholder="Ведите кол-во ответов">
+		<input class="add" type="submit" value="подтвердить">
+	</form>
+</div> -->
+</div>		
+	 
 
 {% endblock %}

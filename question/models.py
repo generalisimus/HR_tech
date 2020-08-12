@@ -32,9 +32,15 @@ class Poll(models.Model):
 
 #Создаем модель вопроса
 class Question(models.Model):
+	QUESTION_TYPE = (
+		('checkbox', 'checkbox'),
+		('radio', 'radio'),
+	)
+
 	name = models.ForeignKey(Poll, on_delete=models.CASCADE)
 	title = models.CharField(max_length=500, verbose_name='Вопрос', null=False, blank=False )
-	images = models.ImageField(upload_to='media/%Y/%m/%d', default=None, blank=True)
+	question_type = models.CharField(max_length=8, choices=QUESTION_TYPE, verbose_name='тип ответа')	
+	images = models.ImageField(upload_to='media/%Y/%m/%d', null=True, blank=True)
 
 	#is_active = models.BooleanField(verbose_name='опубликован')
 
@@ -69,6 +75,10 @@ class ResultsAll(models.Model):
 
 	def __str__(self):
 		return self.poll_total
+
+	class Meta:
+		verbose_name='Результат'
+		verbose_name_plural='Результаты'
 
 
 

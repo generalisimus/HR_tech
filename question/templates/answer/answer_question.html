@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,16 +8,17 @@
 <body>
 	<div>
 		<h1>Опрос: {{ polls }} </h1>
-	
-
-
 		<h3>{{ question.title }}</h3>
+		{% if question.images %}
+			<img style="width: 300px; height: auto;" src="{{ question.images.url }}">
+		{% endif %}
 	
-
+		{% if question.question_type == 'radio' %}
 		<form action="{% url 'question:points' question.id %}" method="POST">
 		{% csrf_token %}
 		{% for answer in question.answer_set.all %}
 		<div class="form-check">
+			
 			<input class="form-check-input" type="radio" name="answer" id="answer{{ forloop.counter }}" value="{{answer.point}}"/>
 			<label class="form-check-label" for="answer{{ forloop.counter }}"> {{ forloop.counter }}. {{ answer.answer }} </label>
 		{% endfor %}
@@ -24,6 +26,21 @@
 		<input type="submit" value="Отправить">
 
 		</form>
+		{% endif %}
+
+		{% if question.question_type == 'checkbox' %}
+		<form action="{% url 'question:points' question.id %}" method="POST">
+		{% csrf_token %}
+		{% for answer in question.answer_set.all %}
+		<div class="form-check">
+			<input class="form-check-input" type="checkbox" name="answer" id="answer{{ forloop.counter }}" value="{{answer.point}}"/>
+			<label class="form-check-label" for="answer{{ forloop.counter }}"> {{ forloop.counter }}. {{ answer.answer }} </label>
+		{% endfor %}
+		</div>
+		<input type="submit" value="Отправить">
+
+		</form>
+		{% endif %}
 		
 	
 	</div>

@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
-	{% if p.is_active %}
+	{% if  p.is_active %}
 		<h2><a href=" {% url 'question:answer_question' question.id %} "> {{ p }} </a></h2>
 	{% endif %}
 
+
 	{% if not polls %}
-		<p> {{ user | title }} для вас нет доступных опросов  </p>
+		<h4><i> {{ user | title }} для вас нет доступных опросов</i>  </h4>
 	{% endif %}
 {% endblock %}

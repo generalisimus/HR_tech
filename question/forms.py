@@ -15,7 +15,7 @@ class PollForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
 	class Meta:
 		model = Question
-		fields =  ['name', 'title', 'images']
+		fields =  ['name', 'title', 'question_type', 'images']
 
 
 class AnswerForm(forms.ModelForm):

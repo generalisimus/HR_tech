@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-	<form id="form-question" method="post">  
+	<form id="form-question" method="post" enctype="multipart/form-data">  
  	 	{% csrf_token %} 
  	 	{{question_formset.management_form}}  
 	 	{% for form in question_formset %}  
@@ -9,5 +9,10 @@
 	  	{% endfor %}
 	  	<input type="submit" name="question" value="Сохранить"> 
 	</form> 
+	<form method="post">
+		{% csrf_token %} 
+		<input type="text" name="number" placeholder="Ведите кол-во ответов">
+		<input class="add" type="submit" value="подтвердить">
+	</form>
 	 
 {% endblock %}
