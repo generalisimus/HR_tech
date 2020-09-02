@@ -1,15 +1,26 @@
+{% load static %}
 <!DOCTYPE html>  
 <html lang="en">  
 <head>  
- <meta charset="UTF-8">  
- <title>Войти</title>  
+    <meta charset="UTF-8">
+    <title>Вход</title>
+    <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
+    <link rel="stylesheet" href="{% static "css/style.css"%}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head>  
-<body>  
-<form method="post">  
-	{% csrf_token %}  
-	{{ form.as_p }}  
-	<input type="submit" value="Войти">  
-</form> 
-	<p>Пройдите процедуру <a href="{% url 'question:register' %}">регистрации</a></p> 
+<body style="display: flex; justify-content: center; ">  
+<form method="post"> 
+	{% csrf_token %}  		
+	<div style="margin-top: 10em; background-color: #7CB9D1FF; padding: 30px; border-radius: 1rem;">  
+		<h2 style="display: flex; justify-content: center; ">Вход</h2> 
+		{{ form.as_p }} 
+		<input style="display: flex; justify-content: center;" type="submit" value="Войти">  
+		<h5 style="margin-top: 1rem;">Пройдите процедуру <a href="{% url 'question:register' %}">регистрации</a></h5> 
+	</div>
+</form>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="{% static "js/main.js" %}"></script>   
 </body>  
 </html>

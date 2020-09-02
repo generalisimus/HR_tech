@@ -1,12 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 
-	{% if  p.is_active %}
-		<h2><a href=" {% url 'question:answer_question' question.id %} "> {{ p }} </a></h2>
+<div id="answer_polling" >
+	{% if  poll_first.is_active and question.id or following_poll.is_active %}
+		<h2 style="display: flex; justify-content: center;"><a id="answer_question" href=" {% url 'question:answer_question' question.id %} "> {{ poll_first }} </a></h2>
 	{% endif %}
 
 
 	{% if not polls %}
-		<h4><i> {{ user | title }} для вас нет доступных опросов</i>  </h4>
+		<h4 style="display: flex; justify-content: center;"><i> {{ user | title }} для вас нет доступных опросов</i>  </h4>
+	{% endif %}	
+	{% if list_following_poll %}
+		<h6 style="display: flex; justify-content: center;">Следующий опрос откроется <span> &nbsp {{ following_poll.data_publish }} </span> </h6>
 	{% endif %}
 {% endblock %}

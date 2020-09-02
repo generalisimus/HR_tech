@@ -1,18 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
-	<form id="form-question" method="post" enctype="multipart/form-data">  
- 	 	{% csrf_token %} 
- 	 	{{question_formset.management_form}}  
-	 	{% for form in question_formset %}  
-        	{{ form.as_p }}
-	        <br>  
-	  	{% endfor %}
-	  	<input type="submit" name="question" value="Сохранить"> 
-	</form> 
-	<form method="post">
-		{% csrf_token %} 
-		<input type="text" name="number" placeholder="Ведите кол-во ответов">
-		<input class="add" type="submit" value="подтвердить">
-	</form>
+	
+	<div class="create">	
+		<div class="answer_invisible">	
+			<form id="form-question" method="post" enctype="multipart/form-data">  
+ 	 			<div class="form-row">
+ 	 				<div class="col-md-6 mb-3">	 			
+	 					<div class="col-md-6 mb-3">	
+	 						{% csrf_token %} 
+		 	 				{{question_formset.management_form}}  
+			 				{% for form in question_formset %}
+			 				{{ form.as_p}}
+			  				{% endfor %}
+			  				<input type="text" name="question" placeholder="Ведите кол-во ответов"> 
+			  				<input style="margin-top: 5px;" type="submit" value="Сохранить">
+			  				{{ c }}
+			  			</div>
+			  		</div>
+			  	</div>		 
+			</form>
+		</div>	
+	</div> 
+<!-- 	<form method="post">
+	{% csrf_token %} 
+	<input type="text" name="number" placeholder="Ведите кол-во ответов">
+	<input class="add" type="submit" value="подтвердить">
+</form> -->
 	 
 {% endblock %}

@@ -1,51 +1,54 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>Document</title>
-</head>
-<body>
-	<div>
-		<h1>Опрос: {{ polls }} </h1>
-		<h3>{{ question.title }}</h3>
-		{% if question.images %}
-			<img style="width: 300px; height: auto;" src="{{ question.images.url }}">
+{% extends 'base.html' %}
+{% block content %}
+
+		<div class="answer_error" style="display: none;">
+			<h1>Время вышло!Обратитесь к администратору!<br><a style="display: flex; justify-content: center;" href="{% url 'question:answer_poll' %}">Вернуться</a></h1>
+		</div>
+	<div class="answer">			
+		<h1 class="create">Опрос: {{ polls }} </h1>
+		{% if polls.timer %}
+		<h5 class="create" id="timer_poll"> На прохождение опроса у вас оcталось &nbsp <span id="minutes">{{ minutes }}</span> : <span id="seconds" > {{ second }}  </span> &nbsp секунд</h5>
+		
+		<p class="create" > Осталось - <span id="timer_question" >{{question.timer_start}}</span> секунд </p>
 		{% endif %}
-	
+		<h3 class="create">{{ question.title }}</h3>
+		{% if question.images %}
+		<div class="create">
+			<img style="width: 450px; height: auto;" src="{{ question.images.url }}">
+		</div>
+		{% endif %}
+		
 		{% if question.question_type == 'radio' %}
-		<form action="{% url 'question:points' question.id %}" method="POST">
+		<form class="create" action="{% url 'question:points' question.id %}" method="POST">
 		{% csrf_token %}
 		{% for answer in question.answer_set.all %}
-		<div class="form-check">
-			
-			<input class="form-check-input" type="radio" name="answer" id="answer{{ forloop.counter }}" value="{{answer.point}}"/>
-			<label class="form-check-label" for="answer{{ forloop.counter }}"> {{ forloop.counter }}. {{ answer.answer }} </label>
+			<div class="form-check" style= "zoom: 1.1;">
+					<input class="form-check-input" type="radio" name="answer" id="answer{{ forloop.counter }}" value="{{answer.point}}"/>
+					<label class="form-check-label" for="answer{{ forloop.counter }}"> - {{ answer.answer }} </label>	
 		{% endfor %}
-		</div>
-		<input type="submit" value="Отправить">
+			</div>
+		<input class="input_time" type="submit" value="Отправить">
 
 		</form>
 		{% endif %}
 
 		{% if question.question_type == 'checkbox' %}
-		<form action="{% url 'question:points' question.id %}" method="POST">
+		<form class="create" action="{% url 'question:points' question.id %}" method="POST">
 		{% csrf_token %}
 		{% for answer in question.answer_set.all %}
-		<div class="form-check">
+		<div class="form-check" style= "zoom: 1.1;">
 			<input class="form-check-input" type="checkbox" name="answer" id="answer{{ forloop.counter }}" value="{{answer.point}}"/>
 			<label class="form-check-label" for="answer{{ forloop.counter }}"> {{ forloop.counter }}. {{ answer.answer }} </label>
 		{% endfor %}
 		</div>
-		<input type="submit" value="Отправить">
+		<br>
+		<input class="input_time" type="submit" value="Отправить">
 
 		</form>
 		{% endif %}
-		
-	
-	</div>
-	
+	</div>		
 
-	
-</body>
-</html>
+
+
+
+{% endblock %}

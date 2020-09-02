@@ -15,7 +15,7 @@ urlpatterns = [
 	#path('question', QuestionEdit.as_view(), name='question'),
 	#path('answer', AnswerEdit.as_view(), name='answer'),
 	path('question/create', question_create, name='question_create'),
-	path('question_anwer/create', answer_create, name='answer_create'),
+	path('question_anwer/create/<int:count>/', answer_create, name='answer_create'),
 	path('login/', LoginView.as_view(template_name='login.html'), name='login'),
 	path('logout/', LogoutView.as_view(), name='logout'),
 	path('register/', RegisterView.as_view(  

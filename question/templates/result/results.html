@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
 
-	<h1> Вы успешно прошли опрос "{{ poll.title }}" </h1>
+	<h1 class="create"> Вы успешно прошли опрос "{{ poll.title }}" </h1>
 
-	<h3> {{users|title}} ваш результат {{ result_user.total }} баллов. <br> {{ result_procent_user }}% опрошенных имеют результат лучше вашего. Всего опрошенных - {{ res_user }} </h3>
+	<h3 class="create"> {{users|title}} ваш результат {{ result_user.total }} баллов. <br> {{ result_procent_user }}% опрошенных имеют результат лучше вашего.<br> Всего опрошенных - {{ res_user }} </h3>
 	
 	{% if repeat > 0 %}
-		<h3>Кол-во человек имеющих такой же результат - {{ repeat }} </h3>
+		<h3 class="create">Кол-во человек имеющих такой же результат - {{ repeat }} </h3>
 	{% endif %}
-
-	<button type="button" class="btn btn-primary" ><a style="text-decoration: none; color: white;" href="{% url 'question:base' %}"> Вернуться на главную страницу </a></button>
+	<div style="display: flex; justify-content: center;">
+		<button type="button" class="btn btn-primary" ><a style="text-decoration: none; color: white;" href="{% url 'question:base' %}"> Вернуться на главную страницу </a></button>
+	</div>
 
 {% endblock %}

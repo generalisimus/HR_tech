@@ -19,13 +19,13 @@ class AnswerInline(admin.TabularInline):
 @admin.register(Poll)
 class PollAdmin(admin.ModelAdmin):
 	model = Poll
-	list_display = ['title', 'id', 'is_active']
+	list_display = ['title', 'id', 'is_active', 'timer']
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
 	search_fields = ['title']
 	inlines = [AnswerInline]
-	list_display = ['title', 'id']
+	list_display = ['title', 'id', 'name']
 	#date_hierarchy = ('data_publish')
 
 @admin.register(UserProfile)

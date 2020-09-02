@@ -15,6 +15,10 @@ from django.forms import formset_factory
 from django.db.models import Sum, Max, Min
 from django.db.models import Q
 from django.shortcuts import redirect
+import datetime
+import time
+
+#Регистация
 	
 class RegisterView(FormView):
 	form_class = UserCreationForm  
@@ -43,67 +47,12 @@ class CreateUserProfile(FormView):
 		instance.save()  
 		return super(CreateUserProfile, self).form_valid(form)
 
-# class QuestionEdit(CreateView):
-# 	model = Question
-# 	form_class = QuestionForm
-# 	success_url = reverse_lazy('question:answer')
-# 	template_name = 'question.html'
 
-
-# class AnswerEdit(CreateView):
-# 	model = Answer
-# 	form_class = AnswerForm 
-# 	success_url = reverse_lazy('question:base')
-# 	template_name = 'answer.html'
-
-
-def question_create(request):
-	QuestionFormSet = formset_factory(QuestionForm, extra=1)
-	if request.method == 'POST':
-		question_formset = QuestionFormSet(request.POST, request.FILES, prefix='question')
-		if question_formset.is_valid():
-			if 'images' in request.FILES:
-				question_formset.images = request.FILEX['images']
-				question_formset.save(commit=True)
-
-			for question_form in question_formset:
-				question_form.save()
-			return HttpResponseRedirect(reverse_lazy('question:answer_create'))			
-		
-	else:
-		question_formset = QuestionFormSet(prefix='question')
-	return render(request, 'create_poll/question_create.html', {'question_formset': question_formset})
-
-
-
-def answer_create(request):
-	n = 0
-	if request.POST.get('number'):
-		b = request.POST['number']
-		n = int(b)
-
-	AnswerFormSet = formset_factory(AnswerForm, extra = n)
-	question = Question.objects.last()
-	if request.method == 'POST' and request.POST.get('question'):
-		answer_formset = AnswerFormSet(request.POST, request.FILES, prefix='answer')
-		if answer_formset.is_valid():
-			for answer_form in answer_formset:
-				answer_form.save()
-			return HttpResponseRedirect(reverse_lazy('question:base'))
-
-	else:
-		answer_formset = AnswerFormSet(prefix='answer')
-	return render(request, 'create_poll/answer_create.html', {'answer_formset': answer_formset})
-
-
-# @login_required
-def base(request):
-    poll = Poll.objects.all().order_by('id')
-    return render(request, 'base.html', context = {'poll': poll})
-
+#Создаем опрос 
 @user_passes_test(lambda user: user.is_staff)
 def poll(request):
-	PollFormSet = modelformset_factory(Poll, fields=('title', 'data_publish', 'is_active',))
+	PollFormSet = modelformset_factory(Poll, fields=('title', 'data_publish', 'is_active', 'timer'))
+	date = datetime.date.today()
 	if request.method == 'POST':
 		form = PollFormSet(request.POST)
 		if form.is_valid():
@@ -112,23 +61,103 @@ def poll(request):
 			return HttpResponseRedirect(reverse_lazy('question:question_create'))
 	else:
 		form = PollFormSet(queryset=Poll.objects.none())
-	return render(request, 'create_poll/index.html', {'form' : form })
+	return render(request, 'create_poll/index.html', {'form' : form, 'date': date })
 
-def answer_poll(request):
+#Создаем вопрос 
+def question_create(request):
+	QuestionFormSet = formset_factory(QuestionForm, extra=1)
+	date = datetime.date.today()
+	count = 0
+	if request.method == 'POST':
+		count = request.POST['question'] #Вводим кол-во ответов на вопрос.
+		question_formset = QuestionFormSet(request.POST, request.FILES, prefix='question')
+		if question_formset.is_valid():
+			if 'images' in request.FILES:
+				question_formset.images = request.FILEX['images']
+				question_formset.save(commit=True)
+			for question_form in question_formset:
+				question_form.save()
+			return HttpResponseRedirect(reverse_lazy('question:answer_create', args=(count,)))			
+		
+	else:
+		question_formset = QuestionFormSet(prefix='question')
+	return render(request, 'create_poll/question_create.html', { 'date': date, 'question_formset': question_formset })
+
+#Создаем ответы на вопрос
+def answer_create(request, count):
+	count = count
+	date = datetime.date.today()
+	question = Question.objects.last()
+	AnswerFormSet = formset_factory(AnswerForm, extra = count)
+	if request.method == 'POST' and request.POST.get('question'):
+		answer_formset = AnswerFormSet(request.POST, request.FILES, prefix='answer')
+		if answer_formset.is_valid():
+			for answer_form in answer_formset:
+				if answer_form =='':
+					return HttpResponse('ok')
+				answer_form.save()
+			return HttpResponseRedirect(reverse_lazy('question:base'))
+	else:
+		answer_formset = AnswerFormSet(prefix='answer')
+	return render(request, 'create_poll/answer_create.html', { 'date': date, 'answer_formset': answer_formset})
+
+
+#Начальная страница
+def base(request):
+	poll = Poll.objects.all().order_by('id')
+	date = datetime.date.today()
+	
+
+	return render(request, 'base.html', context={'poll':poll, 'date': date,})
+
+
+#Страница выбора опроса пользователем
+def answer_poll(request):	
+
+	poll_timer_start = Poll.objects.all()
+	date_now = time.time()
+
+	list_following_poll = []
+	q = str()
+	
+
+	for i in poll_timer_start:
+		if i.is_active == False and date_now > i.data_publish.timestamp():
+			q = Poll.objects.get(title__iexact=i.title)
+	if q:
+		q.is_active = True
+		q.save()
+
+	for i in poll_timer_start:
+		if date_now < i.data_publish.timestamp():
+			list_following_poll.append(i.title)
+	
+	if list_following_poll:		
+		sorted_following_poll = sorted(list_following_poll)
+		first_following_poll = sorted_following_poll[0]
+
+		following_poll = Poll.objects.get(title__iexact=first_following_poll)
+		following_poll_time = Poll.objects.get(title__iexact=first_following_poll).data_publish.timestamp() 
+			
+	
 	template = loader.get_template('answer/answer_poll.html')
 	questions = Question.objects.all()
 	answers = Answer.objects.all()
 	result = ResultsAll.objects.filter(id_user=request.user.id)
 	res = [x for x in result]
 	polls = Poll.objects.all().exclude(title__in=res).exclude(is_active=False)
-	p = polls.first()
+	poll_first = polls.first()
 	question = Question.objects.filter(name__in=polls).first()
-	r = ResultsAll.objects.last()
+	results_all = ResultsAll.objects.last()
+	date = datetime.date.today()
 
 	data = {
-		'p': p,
+		'polls': polls,
+		'q': q,
+		'date': date,
+		'poll_first': poll_first,
 		'question': question,
-		'r': r,
+		'results_all': results_all,
 		'results': results,
 		'res': res,
 		'result': result,
@@ -139,35 +168,59 @@ def answer_poll(request):
 	return HttpResponse(template.render(data, request))
 
 
+#Страница ответов и расчета времени
 def answer_question(request, pk):
+	
 	template = loader.get_template('answer/answer_question.html')
 	question = Question.objects.get(pk=pk)
 	polls = Poll.objects.get(title=question.name)
 	questions = Question.objects.filter(name=polls)
-	d = 11
-	q = []
-	for i in questions:
-		q.append(i.id)
-	data = {
-		'd': d,
-		'q': q,
-		'polls': polls,
-		'question': question,
-		'questions': questions
+	date = datetime.date.today()		
+	if polls.timer:		
+		i = []
+		for q in questions:
+			i.append(q.timer_start)
+		sum_time = sum(i)
+		a = sum_time * 0.75
+		minutes = round(a) // 60
+		second = round(a) % 60
 
-	}
+		data = {
+			'minutes': round(minutes),
+			'second': round(second),
+#			'sum_time': sum_time,
+			'date': date,
+			'polls': polls,
+			'question': question,
+			'questions': questions
 
+		}
+		return HttpResponse(template.render(data, request))
+	else:		
+		data = {
+			'date': date,
+			'polls': polls,
+			'question': question,
+			'questions': questions
+
+		}
+		return HttpResponse(template.render(data, request))
 	return HttpResponse(template.render(data, request))
+
+
+
+#Сохранение результатов на каждый вопрос
 
 def points(request, question_id):
 	result = Results.objects.filter(id_user=request.user.id)
 	question = Question.objects.get(id=question_id)
 	poll = Poll.objects.get(title=question.name)
 	questions = Question.objects.filter(name=poll)
+	count = 0
 	list_result = []
 	for i in result:
 		list_result.append(i.question_total)
-	if question.title in list_result:
+	if question.id in list_result:
 		context={
 			'error': ' Вы пытались ответить дважды' '\n'
 					'обратитесь к администратору'
@@ -175,7 +228,6 @@ def points(request, question_id):
 		}
 		return render(request, 'error.html', context)
 
-#	i = Question.objects.filter(name=poll).count()
 	question_list_id = []
 	for i in questions:
 		question_list_id.append(i.id)
@@ -187,13 +239,16 @@ def points(request, question_id):
 							id_user = request.user.id,
 							question_total = question.title, 
 							poll_total = poll.title
-			)
-			question_id += 1
-			if question_id not in question_list_id:
-			 	return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
-			return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
-		# elif question_id not in question_list_id:
-		# 	return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
+			)			
+			question_id = question_id
+			while question_id <= question_list_id[-1]:
+				question_id += 1
+				if question_id in question_list_id:
+					return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
+				elif question_id > question_list_id[-1]:
+					return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))					
+				else:
+					continue
 	elif request.method == 'POST' and question.question_type == 'checkbox':
 		if request.POST.get('answer') and question_id in question_list_id:		
 			answer_server = request.POST.getlist('answer')
@@ -208,12 +263,16 @@ def points(request, question_id):
 							question_total = question.title, 
 							poll_total = poll.title
 			)
-			question_id += 1
-			if question_id not in question_list_id:
-				return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))
 
-			return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
-
+			question_id = question_id
+			while question_id <= question_list_id[-1]:
+				question_id += 1
+				if question_id in question_list_id:
+					return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
+				elif question_id > question_list_id[-1]:
+					return HttpResponseRedirect(reverse('question:save', args=(poll.id,)))		
+				else:
+					continue
 
 	else:
 		return HttpResponseRedirect(reverse('question:answer_question', args=(question.id,)))
@@ -221,7 +280,7 @@ def points(request, question_id):
 	return HttpResponseRedirect(reverse('question:answer_question', args=(question_id,)))
 
 
-
+#Сохранение общих результатов на опрос
 
 def save(request, pk):
 	template = loader.get_template('result/results.html')
@@ -241,6 +300,9 @@ def save(request, pk):
 	return a
 
 
+
+#Вывод рузультата прохождения опроса пользователем
+
 def results(request, poll_id):
 	template = loader.get_template('result/results.html')
 	polls = Poll.objects.filter(id=poll_id)
@@ -251,6 +313,7 @@ def results(request, poll_id):
 	
 	questions = Question.objects.filter(name__in=polls).count()
 	users = request.user
+	date = datetime.date.today()
 	
 	result_user = ResultsAll.objects.filter(poll_total=poll.title).get(id_user=users.id)
 
@@ -273,6 +336,7 @@ def results(request, poll_id):
 	poll_question = Question.objects.filter(name__in=polls)
 	poll_answer = Answer.objects.filter(question__in=poll_question)
 	data = {
+		'date': date,
 		'res_user': res_user,
 		'user': user,
 		'result_user': result_user,
@@ -284,6 +348,7 @@ def results(request, poll_id):
 	}
 	return HttpResponse(template.render(data, request))
 
+#Вывод результата для администратора.
 def result_admin(request):
 	template = loader.get_template('result/result_admin.html')
 	search_query = request.GET.get('search', '')
@@ -306,22 +371,7 @@ def result_admin(request):
 	data = {
 		'result_max': result_max,
 		'users': users,
-		'user': user,
+		'user': user,                                              
 		'result': result,
 	}
 	return HttpResponse(template.render(data))
-
-# Присвоить связной модели name в answer значение по умоланию далее с помощь Jquery организовать функцию clone
-	#для всей формы  т.е клонирование осущ за счет создания формы полностью 
-
-# при добавлениии опроса по умолчанию вопрос добавлять в только что созданный опрос (доделать)
-
-# добавляем детальное отображение результатов опроса
-
-# добавить временное ограничение на опрос и на вопрос
-
-# добавить try except
-
-# При помощи JS:
-#	1. Добавляе алерты при создании опроса и при ответах на вопросы а так же при регистрации 
-#	2. Стилизовать приложение.

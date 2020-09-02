@@ -9,17 +9,17 @@ class ProfileCreationForm(forms.ModelForm):
 class PollForm(forms.ModelForm):
 	class Meta:
 		model = Poll
-		fields = ['title']
+		fields = ['title', 'data_publish', 'is_active' ]
 
 
 class QuestionForm(forms.ModelForm):
 	class Meta:
 		model = Question
-		fields =  ['name', 'title', 'question_type', 'images']
+		fields =  ['name', 'title', 'question_type', 'images', 'timer_start']
 
 
 class AnswerForm(forms.ModelForm):
 	class Meta:
 		model = Answer
-		fields = ['answer', 'point']
+		fields = ['answer', 'point',]
 
